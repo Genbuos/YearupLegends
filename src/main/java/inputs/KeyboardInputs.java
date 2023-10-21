@@ -20,19 +20,23 @@ public class KeyboardInputs implements KeyListener {
     public void keyPressed(KeyEvent e) {
       switch (e.getKeyCode()){
 
-          case  KeyEvent.VK_W:
+          case  KeyEvent.VK_SPACE   :
+              //Up
               gamePanel.changeYDelta(-5);
               break;
           case  KeyEvent.VK_A:
+             //Left
               gamePanel.changeXDelta(-5);
               break;
           case  KeyEvent.VK_S:
-
+              //Down
               gamePanel.changeYDelta(5);
               break;
           case  KeyEvent.VK_D:
+              //Right
               gamePanel.changeXDelta(5);
               break;
+
       }
     }
 
