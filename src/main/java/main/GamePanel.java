@@ -4,30 +4,53 @@ import java.awt.Color;
 import inputs.KeyboardInputs;
 import inputs.MouseInputs;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.Random;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+
 
 public class GamePanel extends JPanel {
     private MouseInputs mouseInputs;
     private float xdelta = 100, ydelta = 100;
-    private float xDir =1f, yDir =1f;
 
-    private Color color = new Color(150, 20, 90);
+    private BufferedImage img, subImg;
 
-    private Random random;
-    private int frames =0;
 
-    private long lastCheck = 0;
+
+
 
     public GamePanel(){
-        random = new Random();
+
         mouseInputs = new MouseInputs(this);
+        importImg();
+        setPanelSize();
         addKeyListener(new KeyboardInputs(this));
         addMouseListener(mouseInputs);
         addMouseMotionListener(mouseInputs);
+    }
+
+    private void importImg() {
+
+        try(InputStream is = getClass().getResourceAsStream("/player_sprites.png")){
+            if(is != null)
+                img = ImageIO.read(is);
+
+
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    private void setPanelSize() {
+        //images are 32 by 32 px
+        Dimension size = new Dimension(1280, 800);
+        setMinimumSize(size);
+        setPreferredSize(size);
+        setMaximumSize(size);
     }
 
     public void changeXDelta(int value){
@@ -55,37 +78,22 @@ public class GamePanel extends JPanel {
         // Jpanel Class
         super.paintComponent(graphics);
 
-        updateRectangle();
-        graphics.setColor(color);
-
-        graphics.fillRect(((int) xdelta), (int) ydelta, 200, 50);
 
 
-    }
+        if(img != null) {
+            subImg = img.getSubimage(1*64, 8*40, 64, 40);
+            graphics.drawImage(subImg, (int) xdelta, (int) ydelta,128, 80, null);
 
-    private void updateRectangle(){
-        xdelta+= xDir;
-        if(xdelta > 400 || xdelta < 0){
-            //reverses direction
-            xDir*=-1;
-            color = getRandColor();
+        }else {
+            graphics.setColor(Color.red);
+            graphics.drawString("Image not loaded.", 10, 10);
         }
 
 
-
-        ydelta+= yDir;
-        if(ydelta > 400 || ydelta < 0){
-            yDir*=-1;
-            color = getRandColor();
-        }
-
     }
 
-    private Color getRandColor(){
-        int r = random.nextInt(255);
-        int b = random.nextInt(255);
-        int g = random.nextInt(255);
-        return new Color(r,g,b);
-    }
+
+
+
 
 }
