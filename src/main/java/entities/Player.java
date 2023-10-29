@@ -14,7 +14,7 @@ import static utils.Constants.PlayerConstants.*;
 
 public class Player extends Entity{
     private BufferedImage[][] animations;
-    private int animationTick, aniIndex, aniSpeed = 15;
+    private int animationTick, aniIndex, aniSpeed = 20;
 
     private int playerAction = IDLE;
 
@@ -37,7 +37,8 @@ public class Player extends Entity{
     }
 
     public void render(Graphics graphics){
-        graphics.drawImage(animations[playerAction][aniIndex], (int) x, (int) y,100, 80, null);
+        BufferedImage currentFrame = animations[playerAction][aniIndex];
+        graphics.drawImage(currentFrame, (int) x, (int) y,200, 300, null);
 
     }
 
@@ -78,7 +79,6 @@ public class Player extends Entity{
         animationTick = 0;
         aniIndex = 0;
     }
-
     private void updatePos() {
         moving = false;
 
@@ -100,21 +100,104 @@ public class Player extends Entity{
     }
 
     private void loadAnimations() {
+        animations = new BufferedImage[9][];
 
+        // Define animation data (number of frames and atlas images)
+        AnimationData[] animationData = {
+                new AnimationData(8, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_IDLE_ATLAS)),
+                new AnimationData(8, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_RUN_ATLAS)),
+                new AnimationData(4, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATK1_ATLAS))
+                // Add more animations as needed
+        };
 
+        for (int animationType = 0; animationType < animationData.length; animationType++) {
+            int numFrames = animationData[animationType].numFrames;
+            BufferedImage img = animationData[animationType].atlas;
 
-        BufferedImage img = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATLAS);
-        animations = new BufferedImage[9][6];
-            for (int j = 0; j < animations.length; j++) {
-                for (int i = 0; i < animations[j].length; i++) {
-                    animations[j][i] = img.getSubimage(i*64, j*40, 64, 40);
-                }
+            BufferedImage[] animationFrames = new BufferedImage[numFrames];
 
+            int subimageWidth;
+            if (animationType == ATTACK_1) {
+                // Calculate subimage width based on the smaller size of the attack frames
+                subimageWidth = img.getWidth() / 5; // Manually set the number of frames in the attack animation
+            } else {
+                // For other animations, use the standard frame width
+                subimageWidth = img.getWidth() / numFrames;
             }
 
+            int frameHeight = img.getHeight();
 
+            for (int i = 0; i < numFrames; i++) {
+                animationFrames[i] = img.getSubimage(i * subimageWidth, 0, subimageWidth, frameHeight);
+                animationFrames[i] = normalizeFrameSize(animationFrames[i], subimageWidth, frameHeight, 0);
+            }
 
+            animations[animationType] = animationFrames;
+
+            if (animationType == ATTACK_1) {
+                // Separate and normalize the frames of the attack animation
+                animationFrames = normalizeAttackAnimation(animationFrames, subimageWidth, frameHeight);
+                animations[animationType] = animationFrames;
+            }
+        }
     }
+
+    private BufferedImage[] normalizeAttackAnimation(BufferedImage[] attackFrames, int frameWidth, int frameHeight) {
+        BufferedImage[] normalizedAttackFrames = new BufferedImage[attackFrames.length];
+
+        for (int i = 0; i < attackFrames.length; i++) {
+            normalizedAttackFrames[i] = normalizeFrameSize(attackFrames[i], frameWidth, frameHeight, 0);
+        }
+
+        return normalizedAttackFrames;
+    }
+    private int calculateAnchorX(BufferedImage frame) {
+        // Implement your logic to calculate the anchor point's X coordinate
+        // This could involve detecting transparent pixels, etc.
+        // For example, if your anchor point is in the center of the frame, you can use frame.getWidth() / 2.
+        return frame.getWidth() / 2;
+    }
+
+    // Normalize the frame size and position the anchor point
+    private BufferedImage normalizeFrameSize(BufferedImage frame, int targetWidth, int targetHeight, int anchorX) {
+        BufferedImage result = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = result.createGraphics();
+
+        int x = (targetWidth - frame.getWidth()) / 2; // Center the frame horizontally
+        int y = targetHeight - frame.getHeight(); // Position the frame at the bottom
+
+        g.drawImage(frame, x, y, null);
+        g.dispose();
+
+        return result;
+    }
+    private static class AnimationData {
+        int numFrames;
+        BufferedImage atlas;
+
+        public AnimationData(int numFrames, BufferedImage atlas) {
+            this.numFrames = numFrames;
+            this.atlas = atlas;
+        }
+    }
+
+
+    // Helper method to map animation type to the corresponding atlas
+    private String getAtlasForAnimation(int animationType) {
+        switch (animationType) {
+            case IDLE:
+                return LoadSave.PLAYER_IDLE_ATLAS;
+            case RUNNING:
+                return LoadSave.PLAYER_RUN_ATLAS;
+            case ATTACK_1:
+                return LoadSave.PLAYER_ATK1_ATLAS;
+            // Add cases for other animation types if needed
+            default:
+                return ""; // Handle invalid cases
+        }
+    }
+
+
 
     public void resetDirBooleans(){
         left = false;
