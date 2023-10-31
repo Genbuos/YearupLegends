@@ -29,6 +29,7 @@ public class Constants {
                     return 4;
                 case JUMP:
                 case ATTACK_1:
+                    return 5;
                 case ATTACK_JUMP_1:
                 case ATTACK_JUMP_2:
                 return 3;

@@ -102,46 +102,52 @@ public class Player extends Entity{
     private void loadAnimations() {
         animations = new BufferedImage[9][];
 
-        // Define animation data (number of frames and atlas images)
+        // Define animation data in a more structured way
         AnimationData[] animationData = {
-                new AnimationData(8, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_IDLE_ATLAS)),
-                new AnimationData(8, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_RUN_ATLAS)),
-                new AnimationData(4, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATK1_ATLAS))
+                new AnimationData(8, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_IDLE_ATLAS), IDLE),
+                new AnimationData(8, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_RUN_ATLAS), RUNNING),
+                new AnimationData(5, LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATK1_ATLAS), ATTACK_1)
                 // Add more animations as needed
         };
 
         for (int animationType = 0; animationType < animationData.length; animationType++) {
-            int numFrames = animationData[animationType].numFrames;
-            BufferedImage img = animationData[animationType].atlas;
-
-            BufferedImage[] animationFrames = new BufferedImage[numFrames];
-
-            int subimageWidth;
-            if (animationType == ATTACK_1) {
-                // Calculate subimage width based on the smaller size of the attack frames
-                subimageWidth = img.getWidth() / 5; // Manually set the number of frames in the attack animation
-            } else {
-                // For other animations, use the standard frame width
-                subimageWidth = img.getWidth() / numFrames;
-            }
-
-            int frameHeight = img.getHeight();
-
-            for (int i = 0; i < numFrames; i++) {
-                animationFrames[i] = img.getSubimage(i * subimageWidth, 0, subimageWidth, frameHeight);
-                animationFrames[i] = normalizeFrameSize(animationFrames[i], subimageWidth, frameHeight, 0);
-            }
-
-            animations[animationType] = animationFrames;
-
-            if (animationType == ATTACK_1) {
-                // Separate and normalize the frames of the attack animation
-                animationFrames = normalizeAttackAnimation(animationFrames, subimageWidth, frameHeight);
-                animations[animationType] = animationFrames;
-            }
+            AnimationData data = animationData[animationType];
+            animations[animationType] = loadAndNormalizeAnimation(data);
         }
     }
 
+    private BufferedImage[] loadAndNormalizeAnimation(AnimationData data) {
+        int numFrames = data.numFrames;
+        BufferedImage img = data.atlas;
+
+        int subimageWidth = (data.animationType == ATTACK_1) ? img.getWidth() / 5 : img.getWidth() / numFrames;
+        int frameHeight = img.getHeight();
+
+        BufferedImage[] animationFrames = new BufferedImage[numFrames];
+
+        for (int i = 0; i < numFrames; i++) {
+            animationFrames[i] = img.getSubimage(i * subimageWidth, 0, subimageWidth, frameHeight);
+            animationFrames[i] = normalizeFrameSize(animationFrames[i], subimageWidth, frameHeight, 0);
+        }
+
+        if (data.animationType == ATTACK_1) {
+            animationFrames = normalizeAttackAnimation(animationFrames, subimageWidth, frameHeight);
+        }
+
+        return animationFrames;
+    }
+
+    private static class AnimationData {
+        int numFrames;
+        BufferedImage atlas;
+        int animationType; // Store the animation type
+
+        public AnimationData(int numFrames, BufferedImage atlas, int animationType) {
+            this.numFrames = numFrames;
+            this.atlas = atlas;
+            this.animationType = animationType;
+        }
+    }
     private BufferedImage[] normalizeAttackAnimation(BufferedImage[] attackFrames, int frameWidth, int frameHeight) {
         BufferedImage[] normalizedAttackFrames = new BufferedImage[attackFrames.length];
 
@@ -150,35 +156,6 @@ public class Player extends Entity{
         }
 
         return normalizedAttackFrames;
-    }
-    private int calculateAnchorX(BufferedImage frame) {
-        // Implement your logic to calculate the anchor point's X coordinate
-        // This could involve detecting transparent pixels, etc.
-        // For example, if your anchor point is in the center of the frame, you can use frame.getWidth() / 2.
-        return frame.getWidth() / 2;
-    }
-
-    // Normalize the frame size and position the anchor point
-    private BufferedImage normalizeFrameSize(BufferedImage frame, int targetWidth, int targetHeight, int anchorX) {
-        BufferedImage result = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = result.createGraphics();
-
-        int x = (targetWidth - frame.getWidth()) / 2; // Center the frame horizontally
-        int y = targetHeight - frame.getHeight(); // Position the frame at the bottom
-
-        g.drawImage(frame, x, y, null);
-        g.dispose();
-
-        return result;
-    }
-    private static class AnimationData {
-        int numFrames;
-        BufferedImage atlas;
-
-        public AnimationData(int numFrames, BufferedImage atlas) {
-            this.numFrames = numFrames;
-            this.atlas = atlas;
-        }
     }
 
 
@@ -195,6 +172,19 @@ public class Player extends Entity{
             default:
                 return ""; // Handle invalid cases
         }
+    }
+
+    private BufferedImage normalizeFrameSize(BufferedImage frame, int targetWidth, int targetHeight, int anchorX) {
+        BufferedImage result = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = result.createGraphics();
+
+        int x = (targetWidth - frame.getWidth()) ; // Center the frame horizontally
+        int y = targetHeight - frame.getHeight() ; // Position the frame at the bottom
+
+        g.drawImage(frame, x, y, null);
+        g.dispose();
+
+        return result;
     }
 
 
