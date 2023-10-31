@@ -24,11 +24,12 @@ public class Constants {
             switch (player_action){
                 case RUNNING:
                 case IDLE:
-                    return 8;
+                    return 9;
                 case HIT:
                     return 4;
                 case JUMP:
                 case ATTACK_1:
+                    return 5;
                 case ATTACK_JUMP_1:
                 case ATTACK_JUMP_2:
                 return 3;
