@@ -1,7 +1,8 @@
 package entities;
 
+import main.Game;
 import utils.LoadSave;
-
+import static utils.HelpMethods.CanMoveHere;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -24,13 +25,21 @@ public class Player extends Entity{
 
     private float playerSpeed = 2.0f;
 
-    public Player(float x, float y) {
-        super(x, y);
+    private int[][] lvlData;
+
+    private float xDrawOffSet = 21 * Game.SCALE;
+    private float yDrawOffSet = 4 * Game.SCALE;
+
+
+    public Player(float x, float y, int width, int height) {
+        super(x, y, width, height);
         loadAnimations();
+        initHitbox(x, y, 20*Game.SCALE, 28* Game.SCALE);
     }
 
     public void update(){
         updatePos();
+
         updateAniTick();
         setAnimation();
 
@@ -38,7 +47,10 @@ public class Player extends Entity{
 
     public void render(Graphics graphics){
         BufferedImage currentFrame = animations[playerAction][aniIndex];
-        graphics.drawImage(currentFrame, (int) x, (int) y,200, 300, null);
+        int scaledWidth = width * 2; // Modify this factor to adjust the player's size
+        int scaledHeight = height * 2; // Modify this factor to adjust the player's size
+        graphics.drawImage(currentFrame, (int) (x - xDrawOffSet) - 45 , (int) (y - yDrawOffSet) - 30 , scaledWidth , scaledHeight , null);
+        drawHitbox(graphics);
 
     }
 
@@ -81,20 +93,39 @@ public class Player extends Entity{
     }
     private void updatePos() {
         moving = false;
+        if(!left && !right && !up && !down)
+            return;
+
+        float xSpeed = 0, ySpeed =0;
 
         if(left && !right){
-            x-= playerSpeed;
-            moving = true;
+            xSpeed = -playerSpeed;
+
         } else if(right && !left){
-            x+= playerSpeed;
-            moving = true;
+            xSpeed = playerSpeed;
+
         }
 
         if(up && !down){
-            y-=playerSpeed;
-            moving = true;
+            ySpeed = -playerSpeed;
+
         } else if (down && !up) {
-            y+=playerSpeed;
+            ySpeed =playerSpeed;
+
+        }
+
+//        if(CanMoveHere(x+ xSpeed, y+ ySpeed, width, height, lvlData )){
+//            this.x += xSpeed;
+//            this.y += ySpeed;
+//            moving = true;
+//        }
+
+
+        if(CanMoveHere(hitbox.x+ xSpeed, hitbox.y+ ySpeed, hitbox.width, hitbox.height, lvlData )){
+            hitbox.x += xSpeed;
+            hitbox.y += ySpeed;
+            x += xSpeed;
+            y += ySpeed;
             moving = true;
         }
     }
@@ -127,6 +158,7 @@ public class Player extends Entity{
 
         for (int i = 0; i < numFrames; i++) {
             animationFrames[i] = img.getSubimage(i * subimageWidth, 0, subimageWidth, frameHeight);
+            System.out.println(subimageWidth + frameHeight);
             animationFrames[i] = normalizeFrameSize(animationFrames[i], subimageWidth, frameHeight, 0);
         }
 
@@ -160,19 +192,6 @@ public class Player extends Entity{
 
 
     // Helper method to map animation type to the corresponding atlas
-    private String getAtlasForAnimation(int animationType) {
-        switch (animationType) {
-            case IDLE:
-                return LoadSave.PLAYER_IDLE_ATLAS;
-            case RUNNING:
-                return LoadSave.PLAYER_RUN_ATLAS;
-            case ATTACK_1:
-                return LoadSave.PLAYER_ATK1_ATLAS;
-            // Add cases for other animation types if needed
-            default:
-                return ""; // Handle invalid cases
-        }
-    }
 
     private BufferedImage normalizeFrameSize(BufferedImage frame, int targetWidth, int targetHeight, int anchorX) {
         BufferedImage result = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
@@ -185,6 +204,10 @@ public class Player extends Entity{
         g.dispose();
 
         return result;
+    }
+
+    public void loadLvlData(int [][] lvlData){
+    this.lvlData = lvlData;
     }
 
 
